@@ -1,0 +1,33 @@
+# Created by https://www.gitignore.io/api/go
+
+### Go ###
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+migrations
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+### Go Patch ###
+/vendor/
+/Godeps/
+
+
+# End of https://www.gitignore.io/api/go
+
+# Archivos del IDE
+.idea/
+.vscode/
+
+# Archivos sql de pruebas
+*.sql
+
+# Archivo de configuración. Sólo se deja el ejemplo configuration.json.example
+configuration.json
