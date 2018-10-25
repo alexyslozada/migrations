@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"flag"
 
@@ -21,7 +22,7 @@ func main() {
 
 	if *configFile == "" || *sqlFiles == "" {
 		flag.Usage()
-		log.Fatalf("Los flag -config y -migration son obligatorios")
+		return
 	}
 
 	configuration.LoadConfiguration(*configFile)
@@ -55,10 +56,13 @@ func process(src string, fs []string, ms *model.MigrationStore) {
 		}
 
 		fmt.Printf("Procesando el archivo: %s\n", m.FileName)
-		content := string(ReadContent(filepath.Join(src, m.FileName)))
-		err = ms.Execute(content)
-		if err != nil {
-			log.Fatalf("no se pudo ejecutar la migración: %v", err)
+		contents := strings.Split(string(ReadContent(filepath.Join(src, m.FileName))), ";")
+
+		for _, sql := range contents {
+			err = ms.Execute(sql)
+			if err != nil {
+				log.Fatalf("no se pudo ejecutar la migración: %v", err)
+			}
 		}
 
 		err = ms.Create(&m)
