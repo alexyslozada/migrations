@@ -23,41 +23,45 @@ func main() {
 		flag.Usage()
 		log.Fatalf("Los flag -config y -migration son obligatorios")
 	}
-	configuration.LoadConfiguration(*configFile)
-	model.LoadStorage(configuration.Get())
-	m := model.Migration{}
 
-	db := connection.Connection()
-	err := m.Setup(db)
+	configuration.LoadConfiguration(*configFile)
+	cnfg := configuration.Get()
+
+	db := connection.Connection(cnfg)
+	ms := model.NewStorage(cnfg.Engine, db)
+
+	err := ms.Setup()
 	if err != nil {
 		log.Fatalf("no se pudo inicializar las migraciones en la base de datos: %v", err)
 	}
 
 	fs := ReadFiles(*sqlFiles)
-	process(*sqlFiles, fs, db)
+	process(*sqlFiles, fs, ms)
 
 	fmt.Println("Proceso realizado correctamente.")
 }
 
-func process(src string, fs []string, db *connection.MyDB) {
+func process(src string, fs []string, ms *model.MigrationStore) {
 	for _, v := range fs {
 		m := model.Migration{}
 		m.FileName = v
-		t, err := m.FindByName(db)
+		t, err := ms.FindByName(m.FileName)
 		if err != nil {
 			log.Fatalf("no se pudo consultar la migración en la base de datos: %v", err)
 		}
+
 		if t.ID > 0 {
 			continue
 		}
+
 		fmt.Printf("Procesando el archivo: %s\n", m.FileName)
-		m.Content = string(ReadContent(filepath.Join(src, m.FileName)))
-		err = m.Execute(db)
+		content := string(ReadContent(filepath.Join(src, m.FileName)))
+		err = ms.Execute(content)
 		if err != nil {
 			log.Fatalf("no se pudo ejecutar la migración: %v", err)
 		}
 
-		err = m.Create(db)
+		err = ms.Create(&m)
 		if err != nil {
 			log.Fatalf("no se pudo insertar la migración en la bd: %v", err)
 		}

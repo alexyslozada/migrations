@@ -7,13 +7,9 @@ root = true
 end_of_line = lf
 insert_final_newline = true
 
-# Matches multiple files with brace expansion notation
-# Set default charset
-[*.go]
-charset = utf-8
-
 # 8 space indentation with tabs
 [*.go]
+charset = utf-8
 indent_style = tab
 indent_size = 8
 

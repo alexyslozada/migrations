@@ -3,9 +3,6 @@ package model
 import (
 	"log"
 
-	"sync"
-
-	"github.com/alexyslozada/migrations/configuration"
 	"github.com/alexyslozada/migrations/connection"
 )
 
@@ -18,30 +15,27 @@ const (
 	Mssql = "mssql"
 )
 
-var (
-	s    Storage
-	once sync.Once
-)
-
 type Storage interface {
-	Setup(db *connection.MyDB) error
-	Create(db *connection.MyDB, name string) error
-	FindByName(db *connection.MyDB, name string) (*Migration, error)
-	Execute(db *connection.MyDB, name, query string) error
+	Setup() error
+	Create(name string) error
+	FindByName(name string) (*Migration, error)
+	Execute(content string) error
 }
 
-// LoadStorage carga el DAO para el motor necesario
-func LoadStorage(config *configuration.Configuration) {
-	once.Do(func() {
-		switch config.Engine {
-		case Postgres:
-			s = &Psql{}
-		case Mysql:
-			fallthrough
-		case Mssql:
-			fallthrough
-		default:
-			log.Fatalf("el motor %s aún no está configurado", config.Engine)
-		}
-	})
+// newStorage carga el DAO para el motor necesario
+// y lo devuelve
+func newStorage(engine string, db *connection.MyDB) Storage {
+	var s Storage
+	switch engine {
+	case Postgres:
+		s = NewPsql(db)
+	case Mysql:
+		fallthrough
+	case Mssql:
+		fallthrough
+	default:
+		log.Fatalf("el motor %s aún no está configurado", engine)
+	}
+
+	return s
 }

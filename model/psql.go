@@ -20,10 +20,22 @@ const (
 	findByNamePsql = "SELECT id, file_name, created_at FROM migrations WHERE file_name = $1"
 )
 
-type Psql struct{}
+type Psql struct {
+	DB *connection.MyDB
+}
 
-func (*Psql) Setup(db *connection.MyDB) error {
-	stmt, err := db.DB.Prepare(setupPsql)
+// NewPsql devuelve un puntero a Psql
+func NewPsql(db *connection.MyDB) *Psql {
+	return &Psql{db}
+}
+
+func (p *Psql) getDB() *sql.DB {
+	return p.DB.DB
+}
+
+// Setup crea la tabla de migraciones en la base de datos
+func (p *Psql) Setup() error {
+	stmt, err := p.getDB().Prepare(setupPsql)
 	if err != nil {
 		log.Printf("no se pudo preparar la consulta para crear la tabla de migraciones: %v", err)
 		return err
@@ -39,8 +51,9 @@ func (*Psql) Setup(db *connection.MyDB) error {
 	return nil
 }
 
-func (*Psql) Create(db *connection.MyDB, name string) error {
-	stmt, err := db.DB.Prepare(insertPsql)
+// Create inserta el nombre del archivo de migración ejecutado
+func (p *Psql) Create(name string) error {
+	stmt, err := p.getDB().Prepare(insertPsql)
 	if err != nil {
 		log.Printf("no se pudo preparar la sentencia para insertar la migración: %v", err)
 		return err
@@ -56,9 +69,10 @@ func (*Psql) Create(db *connection.MyDB, name string) error {
 	return nil
 }
 
-func (*Psql) FindByName(db *connection.MyDB, name string) (*Migration, error) {
+// FindByName busca los nombres de migración
+func (p *Psql) FindByName(name string) (*Migration, error) {
 	m := &Migration{}
-	stmt, err := db.DB.Prepare(findByNamePsql)
+	stmt, err := p.getDB().Prepare(findByNamePsql)
 	if err != nil {
 		log.Printf("no se pudo preparar la sentencia para consultar por nombre la migración: %v", err)
 		return m, err
@@ -77,17 +91,18 @@ func (*Psql) FindByName(db *connection.MyDB, name string) (*Migration, error) {
 	return m, nil
 }
 
-func (*Psql) Execute(db *connection.MyDB, name, query string) error {
-	stmt, err := db.DB.Prepare(query)
+// Execute ejecuta la migración encontrada
+func (p *Psql) Execute(content string) error {
+	stmt, err := p.getDB().Prepare(content)
 	if err != nil {
-		log.Printf("no se pudo preparar la sentencia para ejecutar la migración del archivo %s: %v", name, err)
+		log.Printf("no se pudo preparar la sentencia para ejecutar la migración %v", err)
 		return err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec()
 	if err != nil {
-		log.Printf("no se pudo ejecutar la sentencia de migración del archivo %s: %v", name, err)
+		log.Printf("no se pudo ejecutar la sentencia de migración %v", err)
 		return err
 	}
 

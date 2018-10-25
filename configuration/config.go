@@ -44,7 +44,7 @@ func Get() *Configuration {
 	return config
 }
 
-// loadConfiguration lee el archivo configuration.json
+// LoadConfiguration lee el archivo configuration.json
 // y lo carga en un objeto de la estructura Configuration
 func LoadConfiguration(src string) {
 	once.Do(func() {

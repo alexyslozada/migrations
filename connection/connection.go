@@ -26,9 +26,9 @@ type MyDB struct {
 }
 
 // Connection se conecta a la base de datos y devuelve el pool de conexiones a la base de datos
-func Connection() *MyDB {
-	config := configuration.Get()
-	conn, err := sql.Open(config.Engine, connectionString())
+// Se recibe un objeto tipo puntero de configuration.Configuration
+func Connection(config *configuration.Configuration) *MyDB {
+	conn, err := sql.Open(config.Engine, connectionString(config))
 	if err != nil {
 		log.Fatalf("Error al conectarse a la BD: %v", err)
 	}
@@ -44,13 +44,12 @@ func Connection() *MyDB {
 }
 
 // connectionString devuelve la cadena de conexión del motor al que se va a conectar
-func connectionString() string {
-	config := configuration.Get()
+func connectionString(config *configuration.Configuration) string {
 	dns := ""
 	switch config.Engine {
 	case Postgres:
 		dns = fmt.Sprintf(
-			"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+			"user=%s password=%s host=%s port=%d dbname=%s sslmode=%s",
 			config.DBUser,
 			config.DBPassword,
 			config.DBServer,
