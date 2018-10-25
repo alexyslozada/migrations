@@ -46,10 +46,10 @@ func Connection() *MyDB {
 // connectionString devuelve la cadena de conexión del motor al que se va a conectar
 func connectionString() string {
 	config := configuration.Get()
-	dns := ""
+	dsn := ""
 	switch config.Engine {
 	case Postgres:
-		dns = fmt.Sprintf(
+		dsn = fmt.Sprintf(
 			"postgres://%s:%s@%s:%d/%s?sslmode=%s",
 			config.DBUser,
 			config.DBPassword,
@@ -59,12 +59,19 @@ func connectionString() string {
 			config.DBSslmode,
 		)
 	case Mysql:
-		fallthrough
+		dsn = fmt.Sprintf(
+			"%s:%s@tcp(%s:%d)/%s?tls=skip-verify&parseTime=true",
+			config.DBUser,
+			config.DBPassword,
+			config.DBServer,
+			config.DBPort,
+			config.DBName,
+		)
 	case Mssql:
 		fallthrough
 	default:
 		log.Fatalf("El motor de base de datos %s no está configurado aún.", config.Engine)
 	}
 
-	return dns
+	return dsn
 }

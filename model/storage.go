@@ -37,7 +37,7 @@ func LoadStorage(config *configuration.Configuration) {
 		case Postgres:
 			s = &Psql{}
 		case Mysql:
-			fallthrough
+			s = &mysql{}
 		case Mssql:
 			fallthrough
 		default:
