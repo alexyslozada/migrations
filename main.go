@@ -1,10 +1,8 @@
 package main
 
 import (
-	"log"
-	"strings"
-
 	"flag"
+	"log"
 
 	"fmt"
 
@@ -36,14 +34,14 @@ func main() {
 		log.Fatalf("no se pudo inicializar las migraciones en la base de datos: %v", err)
 	}
 
-	fs := ReadFiles(*sqlFiles)
-	process(*sqlFiles, fs, ms)
+	files := ReadFiles(*sqlFiles)
+	processFiles(*sqlFiles, files, ms)
 
 	fmt.Println("Proceso realizado correctamente.")
 }
 
-func process(src string, fs []string, ms *model.MigrationStore) {
-	for _, v := range fs {
+func processFiles(src string, files []string, ms *model.MigrationStore) {
+	for _, v := range files {
 		m := model.Migration{}
 		m.FileName = v
 		t, err := ms.FindByName(m.FileName)
@@ -51,18 +49,16 @@ func process(src string, fs []string, ms *model.MigrationStore) {
 			log.Fatalf("no se pudo consultar la migración en la base de datos: %v", err)
 		}
 
-		if t.ID > 0 {
+		if isProcessed(t.ID) {
 			continue
 		}
 
 		fmt.Printf("Procesando el archivo: %s\n", m.FileName)
-		contents := strings.Split(string(ReadContent(filepath.Join(src, m.FileName))), ";")
+		contents := string(ReadContent(filepath.Join(src, m.FileName)))
 
-		for _, sql := range contents {
-			err = ms.Execute(sql)
-			if err != nil {
-				log.Fatalf("no se pudo ejecutar la migración: %v", err)
-			}
+		err = ms.Execute(contents)
+		if err != nil {
+			log.Fatalf("no se pudo ejecutar la migración: %v", err)
 		}
 
 		err = ms.Create(&m)
@@ -70,4 +66,8 @@ func process(src string, fs []string, ms *model.MigrationStore) {
 			log.Fatalf("no se pudo insertar la migración en la bd: %v", err)
 		}
 	}
+}
+
+func isProcessed(ID int) bool {
+	return ID > 0
 }

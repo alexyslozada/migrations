@@ -93,16 +93,9 @@ func (p *Psql) FindByName(name string) (*Migration, error) {
 
 // Execute ejecuta la migración encontrada
 func (p *Psql) Execute(content string) error {
-	stmt, err := p.getDB().Prepare(content)
+	_, err := p.getDB().Exec(content)
 	if err != nil {
 		log.Printf("no se pudo preparar la sentencia para ejecutar la migración %v", err)
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec()
-	if err != nil {
-		log.Printf("no se pudo ejecutar la sentencia de migración %v", err)
 		return err
 	}
 
