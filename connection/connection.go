@@ -57,8 +57,8 @@ func connectionString(config *configuration.Configuration) string {
 			config.DBName,
 			config.DBSslmode,
 		)
-		if config.DBSslmode == "required" {
-			dns = fmt.Sprintf("%s&sslrootcert=%s", dns, config.DBSSLRootCert)
+		if config.DBSslmode == "require" {
+			dns = fmt.Sprintf("%s sslrootcert=%s", dns, config.DBSSLRootCert)
 		}
 	case Mysql:
 		fallthrough
