@@ -37,6 +37,9 @@ type Configuration struct {
 	// DBSslmode es usado en las conexiones a postgres, si no sabe cual es el valor
 	// a usar, utilice `disable`
 	DBSslmode string `json:"db_sslmode"`
+
+	// DBSSLRootCert es usado para ubicar el certificado del servidor postgres cuando sslmode es `required`
+	DBSSLRootCert string `json:"db_ssl_root_cert"`
 }
 
 // Get devuelve la configuración
