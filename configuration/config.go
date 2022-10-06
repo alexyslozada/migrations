@@ -2,8 +2,8 @@ package configuration
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 	"sync"
 )
 
@@ -51,7 +51,7 @@ func Get() *Configuration {
 // y lo carga en un objeto de la estructura Configuration
 func LoadConfiguration(src string) {
 	once.Do(func() {
-		b, err := ioutil.ReadFile(src)
+		b, err := os.ReadFile(src)
 		if err != nil {
 			log.Fatalf("no se pudo leer el archivo de configuración: %s", err.Error())
 		}

@@ -1,15 +1,15 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 )
 
 // ReadFiles lee los archivos terminados en .sql y los procesa en migration
 func ReadFiles(src string) []string {
 	r := make([]string, 0)
-	files, err := ioutil.ReadDir(src)
+	files, err := os.ReadDir(src)
 	if err != nil {
 		log.Fatalf("no se pudo listar los archivos del directorio: %v", err)
 	}
@@ -27,7 +27,7 @@ func ReadFiles(src string) []string {
 
 // ReadContent lee el contenido del archivo
 func ReadContent(filename string) []byte {
-	f, err := ioutil.ReadFile(filename)
+	f, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatalf("no se pudo leer el contenido del archivo %s: %v", filename, err)
 	}
