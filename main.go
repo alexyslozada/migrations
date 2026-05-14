@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"log"
-
 	"fmt"
-
+	"io"
+	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/alexyslozada/migrations/configuration"
@@ -16,6 +16,8 @@ import (
 func main() {
 	configFile := flag.String("config", "", "Ubicación del archivo de configuración. Debe incluir el nombre del archivo: Ej: /tu/path/configuration.json")
 	sqlFiles := flag.String("migration", "", "Ubicación de los archivos de migración")
+	verbose := flag.Bool("v", false, "Muestra los logs del proceso de migración")
+	flag.BoolVar(verbose, "verbose", false, "Muestra los logs del proceso de migración")
 	flag.Parse()
 
 	if *configFile == "" || *sqlFiles == "" {
@@ -23,24 +25,35 @@ func main() {
 		return
 	}
 
+	out := io.Discard
+	if *verbose {
+		out = os.Stdout
+	}
+	logger := log.New(out, "", log.LstdFlags)
+
 	configuration.LoadConfiguration(*configFile)
 	cnfg := configuration.Get()
 
+	logger.Printf("conectando a la base de datos (%s)...", cnfg.Engine)
 	db := connection.Connection(cnfg)
+
 	ms := model.NewStorage(cnfg.Engine, db)
 
+	logger.Println("inicializando tabla de migraciones...")
 	err := ms.Setup()
 	if err != nil {
 		log.Fatalf("no se pudo inicializar las migraciones en la base de datos: %v", err)
 	}
 
 	files := ReadFiles(*sqlFiles)
-	processFiles(*sqlFiles, files, ms)
+	logger.Printf("%d archivo(s) encontrado(s) en %s", len(files), *sqlFiles)
+
+	processFiles(*sqlFiles, files, ms, logger)
 
 	fmt.Println("Proceso realizado correctamente.")
 }
 
-func processFiles(src string, files []string, ms *model.MigrationStore) {
+func processFiles(src string, files []string, ms *model.MigrationStore, logger *log.Logger) {
 	for _, v := range files {
 		m := model.Migration{}
 		m.FileName = v
@@ -50,10 +63,11 @@ func processFiles(src string, files []string, ms *model.MigrationStore) {
 		}
 
 		if isProcessed(t.ID) {
+			logger.Printf("omitiendo %s (ya aplicada)", m.FileName)
 			continue
 		}
 
-		fmt.Printf("Procesando el archivo: %s\n", m.FileName)
+		logger.Printf("aplicando %s...", m.FileName)
 		contents := string(ReadContent(filepath.Join(src, m.FileName)))
 
 		err = ms.Execute(contents)
@@ -65,6 +79,8 @@ func processFiles(src string, files []string, ms *model.MigrationStore) {
 		if err != nil {
 			log.Fatalf("no se pudo insertar la migración en la bd: %v", err)
 		}
+
+		logger.Printf("migración %s aplicada correctamente", m.FileName)
 	}
 }
 

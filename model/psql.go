@@ -1,11 +1,13 @@
 package model
 
 import (
+	"context"
+	"errors"
 	"log"
 
-	"database/sql"
-
 	"github.com/alexyslozada/migrations/connection"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -21,30 +23,19 @@ const (
 )
 
 type Psql struct {
-	DB *connection.MyDB
+	DB *pgxpool.Pool
 }
 
 // NewPsql devuelve un puntero a Psql
 func NewPsql(db *connection.MyDB) *Psql {
-	return &Psql{db}
-}
-
-func (p *Psql) getDB() *sql.DB {
-	return p.DB.DB
+	return &Psql{DB: db.DB}
 }
 
 // Setup crea la tabla de migraciones en la base de datos
 func (p *Psql) Setup() error {
-	stmt, err := p.getDB().Prepare(setupPsql)
+	_, err := p.DB.Exec(context.Background(), setupPsql)
 	if err != nil {
-		log.Printf("no se pudo preparar la consulta para crear la tabla de migraciones: %v", err)
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec()
-	if err != nil {
-		log.Fatalf("no se pudo crear la tabla de migraciones: %v", err)
+		log.Printf("no se pudo crear la tabla de migraciones: %v", err)
 		return err
 	}
 
@@ -53,49 +44,36 @@ func (p *Psql) Setup() error {
 
 // Create inserta el nombre del archivo de migración ejecutado
 func (p *Psql) Create(name string) error {
-	stmt, err := p.getDB().Prepare(insertPsql)
+	_, err := p.DB.Exec(context.Background(), insertPsql, name)
 	if err != nil {
-		log.Printf("no se pudo preparar la sentencia para insertar la migración: %v", err)
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(name)
-	if err != nil {
-		log.Printf("no se pudo ejecutar la inserción de data en migrations: %v", err)
+		log.Printf("no se pudo insertar la migración '%s': %v", name, err)
 		return err
 	}
 
 	return nil
 }
 
-// FindByName busca los nombres de migración
+// FindByName busca un registro en la tabla de migraciones por nombre
 func (p *Psql) FindByName(name string) (*Migration, error) {
 	m := &Migration{}
-	stmt, err := p.getDB().Prepare(findByNamePsql)
-	if err != nil {
-		log.Printf("no se pudo preparar la sentencia para consultar por nombre la migración: %v", err)
-		return m, err
-	}
-	defer stmt.Close()
-
-	err = stmt.QueryRow(name).Scan(&m.ID, &m.FileName, &m.CreatedAt)
-	if err == sql.ErrNoRows {
+	row := p.DB.QueryRow(context.Background(), findByNamePsql, name)
+	err := row.Scan(&m.ID, &m.FileName, &m.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return m, nil
 	}
 	if err != nil {
-		log.Printf("no se pudo ejecutar la consulta de data en migrations del archivo %s: %v", name, err)
+		log.Printf("no se pudo consultar la migración '%s': %v", name, err)
 		return m, err
 	}
 
 	return m, nil
 }
 
-// Execute ejecuta la migración encontrada
+// Execute ejecuta el contenido SQL de una migración
 func (p *Psql) Execute(content string) error {
-	_, err := p.getDB().Exec(content)
+	_, err := p.DB.Exec(context.Background(), content)
 	if err != nil {
-		log.Printf("no se pudo preparar la sentencia para ejecutar la migración %v", err)
+		log.Printf("no se pudo ejecutar la migración: %v", err)
 		return err
 	}
 

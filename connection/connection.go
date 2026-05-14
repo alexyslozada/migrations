@@ -1,14 +1,12 @@
 package connection
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/alexyslozada/migrations/configuration"
-	_ "github.com/denisenkom/go-mssqldb"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -20,35 +18,31 @@ const (
 	Mssql = "mssql"
 )
 
-// MyDB estructura que tiene un objeto tipo sql.MyDB para proteger que no se cierre la conexión
+// MyDB estructura que tiene un pool de conexiones pgxpool
 type MyDB struct {
-	DB *sql.DB
+	DB *pgxpool.Pool
 }
 
-// Connection se conecta a la base de datos y devuelve el pool de conexiones a la base de datos
-// Se recibe un objeto tipo puntero de configuration.Configuration
+// Connection se conecta a la base de datos y devuelve el pool de conexiones
 func Connection(config *configuration.Configuration) *MyDB {
-	conn, err := sql.Open(config.Engine, connectionString(config))
-	if err != nil {
-		log.Fatalf("Error al conectarse a la BD: %v", err)
-	}
-	err = conn.Ping()
+	connStr := connectionString(config)
+	pool, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
 		log.Fatalf("Error al conectarse a la BD: %v", err)
 	}
 
-	db := &MyDB{}
-	db.DB = conn
+	if err = pool.Ping(context.Background()); err != nil {
+		log.Fatalf("Error al hacer ping a la BD: %v", err)
+	}
 
-	return db
+	return &MyDB{DB: pool}
 }
 
-// connectionString devuelve la cadena de conexión del motor al que se va a conectar
+// connectionString devuelve la cadena de conexión según el motor configurado
 func connectionString(config *configuration.Configuration) string {
-	dns := ""
 	switch config.Engine {
 	case Postgres:
-		dns = fmt.Sprintf(
+		dsn := fmt.Sprintf(
 			"user=%s password=%s host=%s port=%d dbname=%s sslmode=%s",
 			config.DBUser,
 			config.DBPassword,
@@ -58,8 +52,9 @@ func connectionString(config *configuration.Configuration) string {
 			config.DBSslmode,
 		)
 		if config.DBSslmode == "require" {
-			dns = fmt.Sprintf("%s sslrootcert=%s", dns, config.DBSSLRootCert)
+			dsn = fmt.Sprintf("%s sslrootcert=%s", dsn, config.DBSSLRootCert)
 		}
+		return dsn
 	case Mysql:
 		fallthrough
 	case Mssql:
@@ -68,5 +63,5 @@ func connectionString(config *configuration.Configuration) string {
 		log.Fatalf("El motor de base de datos %s no está configurado aún.", config.Engine)
 	}
 
-	return dns
+	return ""
 }
