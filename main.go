@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/alexyslozada/migrations/v2/configuration"
 	"github.com/alexyslozada/migrations/v2/connection"
@@ -17,6 +18,10 @@ var (
 	colorGreen = color.New(color.FgGreen)
 	colorRed   = color.New(color.FgRed)
 )
+
+func ts() string {
+	return time.Now().Format("2006-01-02 15:04:05")
+}
 
 func main() {
 	configFile := flag.String("config", "", "Ubicación del archivo de configuración. Debe incluir el nombre del archivo: Ej: /tu/path/configuration.json")
@@ -36,7 +41,7 @@ func main() {
 
 	err := ms.Setup()
 	if err != nil {
-		colorRed.Printf("error al inicializar la tabla de migraciones: %v\n", err)
+		colorRed.Printf("[%s] error al inicializar la tabla de migraciones: %v\n", ts(), err)
 		os.Exit(1)
 	}
 
@@ -52,12 +57,12 @@ func processFiles(src string, files []string, ms *model.MigrationStore) {
 		m.FileName = v
 		t, err := ms.FindByName(m.FileName)
 		if err != nil {
-			colorRed.Printf("error    %s: %v\n", m.FileName, err)
+			colorRed.Printf("[%s] error    %s: %v\n", ts(), m.FileName, err)
 			os.Exit(1)
 		}
 
 		if isProcessed(t.ID) {
-			colorGray.Printf("omitido  %s\n", m.FileName)
+			colorGray.Printf("[%s] omitido  %s\n", ts(), m.FileName)
 			continue
 		}
 
@@ -65,17 +70,17 @@ func processFiles(src string, files []string, ms *model.MigrationStore) {
 
 		err = ms.Execute(contents)
 		if err != nil {
-			colorRed.Printf("fallido  %s: %v\n", m.FileName, err)
+			colorRed.Printf("[%s] fallido  %s: %v\n", ts(), m.FileName, err)
 			os.Exit(1)
 		}
 
 		err = ms.Create(&m)
 		if err != nil {
-			colorRed.Printf("fallido  %s: %v\n", m.FileName, err)
+			colorRed.Printf("[%s] fallido  %s: %v\n", ts(), m.FileName, err)
 			os.Exit(1)
 		}
 
-		colorGreen.Printf("migrado  %s\n", m.FileName)
+		colorGreen.Printf("[%s] migrado  %s\n", ts(), m.FileName)
 	}
 }
 
