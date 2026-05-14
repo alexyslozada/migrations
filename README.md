@@ -1,15 +1,18 @@
 # migrations
 Permite ejecutar los archivos .sql de migraciones en cualquier base de datos
 
+## Instalación
+```bash
+go get github.com/alexyslozada/migrations/v2@latest
+```
+
 ## Uso
 ```bash
-$ go get -u github.com/alexyslozada/migrations/...
-$ cd $GOPATH/src/github.com/alexyslozada/migrations
 $ cp configuration.json.example configuration.json
-// Edita el archivo configuration.json para que apunte a tu base de datos.
+# Edita el archivo configuration.json para que apunte a tu base de datos.
 
 $ go build
-$ ./migrations -config=/path/to/your/configuration.json -migration=/path/to/you/directory/contains/sql-files/
+$ ./migrations -config=/path/to/your/configuration.json -migration=/path/to/your/directory/sql-files/
 ```
 Los flag -config y -migration son obligatorios. -config indica dónde se encuentra el archivo configuration.json y el flag -migration indica dónde se encuentran los archivos sql de tus migraciones.
 
