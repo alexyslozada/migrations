@@ -1,4 +1,4 @@
-module github.com/alexyslozada/migrations
+module github.com/alexyslozada/migrations/v2
 
 go 1.25.0
 

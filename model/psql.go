@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/alexyslozada/migrations/connection"
+	"github.com/alexyslozada/migrations/v2/connection"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

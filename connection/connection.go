@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/alexyslozada/migrations/configuration"
+	"github.com/alexyslozada/migrations/v2/configuration"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

@@ -3,7 +3,7 @@ package model
 import (
 	"log"
 
-	"github.com/alexyslozada/migrations/connection"
+	"github.com/alexyslozada/migrations/v2/connection"
 )
 
 const (

@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alexyslozada/migrations/configuration"
-	"github.com/alexyslozada/migrations/connection"
-	"github.com/alexyslozada/migrations/model"
+	"github.com/alexyslozada/migrations/v2/configuration"
+	"github.com/alexyslozada/migrations/v2/connection"
+	"github.com/alexyslozada/migrations/v2/model"
 )
 
 func main() {

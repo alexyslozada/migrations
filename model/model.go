@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/alexyslozada/migrations/connection"
+	"github.com/alexyslozada/migrations/v2/connection"
 )
 
 // Migration estructura de migraciones
