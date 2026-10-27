@@ -52,16 +52,17 @@ func main() {
 }
 
 func processFiles(src string, files []string, ms *model.MigrationStore) {
+	processed, err := ms.FindNames()
+	if err != nil {
+		colorRed.Printf("[%s] error al consultar las migraciones registradas: %v\n", ts(), err)
+		os.Exit(1)
+	}
+
 	for _, v := range files {
 		m := model.Migration{}
 		m.FileName = v
-		t, err := ms.FindByName(m.FileName)
-		if err != nil {
-			colorRed.Printf("[%s] error    %s: %v\n", ts(), m.FileName, err)
-			os.Exit(1)
-		}
 
-		if isProcessed(t.ID) {
+		if _, ok := processed[m.FileName]; ok {
 			colorGray.Printf("[%s] omitido  %s\n", ts(), m.FileName)
 			continue
 		}
@@ -82,8 +83,4 @@ func processFiles(src string, files []string, ms *model.MigrationStore) {
 
 		colorGreen.Printf("[%s] migrado  %s\n", ts(), m.FileName)
 	}
-}
-
-func isProcessed(ID int) bool {
-	return ID > 0
 }

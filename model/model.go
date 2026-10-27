@@ -39,6 +39,11 @@ func (m *MigrationStore) FindByName(name string) (*Migration, error) {
 	return m.Storage.FindByName(name)
 }
 
+// FindNames devuelve los nombres de todas las migraciones registradas
+func (m *MigrationStore) FindNames() (map[string]struct{}, error) {
+	return m.Storage.FindNames()
+}
+
 // Execute ejecuta la migración
 func (m *MigrationStore) Execute(content string) error {
 	return m.Storage.Execute(content)

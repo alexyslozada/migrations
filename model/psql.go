@@ -20,6 +20,7 @@ const (
 	)`
 	insertPsql     = "INSERT INTO migrations (file_name) VALUES ($1)"
 	findByNamePsql = "SELECT id, file_name, created_at FROM migrations WHERE file_name = $1"
+	findNamesPsql  = "SELECT file_name FROM migrations"
 )
 
 type Psql struct {
@@ -67,6 +68,32 @@ func (p *Psql) FindByName(name string) (*Migration, error) {
 	}
 
 	return m, nil
+}
+
+// FindNames devuelve los nombres de todas las migraciones registradas
+func (p *Psql) FindNames() (map[string]struct{}, error) {
+	rows, err := p.DB.Query(context.Background(), findNamesPsql)
+	if err != nil {
+		log.Printf("no se pudo consultar las migraciones registradas: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	names := make(map[string]struct{})
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			log.Printf("no se pudo leer la migración registrada: %v", err)
+			return nil, err
+		}
+		names[name] = struct{}{}
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("no se pudo recorrer las migraciones registradas: %v", err)
+		return nil, err
+	}
+
+	return names, nil
 }
 
 // Execute ejecuta el contenido SQL de una migración

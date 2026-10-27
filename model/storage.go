@@ -19,6 +19,7 @@ type Storage interface {
 	Setup() error
 	Create(name string) error
 	FindByName(name string) (*Migration, error)
+	FindNames() (map[string]struct{}, error)
 	Execute(content string) error
 }
 
